@@ -7,23 +7,23 @@ from model.bert import BertForPretraining
 from training.pretraining import pretrain_loop
 
 def main():
-    with open("configs/config_bert_small.json") as f:
+    with open("config/config_small_bert.json") as f:
         config = json.load(f)
 
     # 1) Train tokenizer (if model not present)
-    sp_model = "spm.model"
+    sp_model = "./data/tokenizer/spm.model"
     if not os.path.exists(sp_model):
         print("Training SentencePiece tokenizer on 25% of Wikipedia...")
-        train_sentencepiece(out_prefix="spm", vocab_size=config["vocab_size"], subset_split="train[:25%]")
+        train_sentencepiece(out_prefix="spm", vocab_size=config["vocab_size"], dataset_path="./data/wikipedia_15percent", save_dir="./data/tokenizer")
     else:
         print("Found existing tokenizer:", sp_model)
 
     tokenizer = SentencePieceTokenizer(sp_model)
 
-    # 2) Create dataloader using split=25%
+    # 2) Create dataloader using split=15%
     train_loader = create_wiki_dataloader(
         tokenizer=tokenizer,
-        split="train[:25%]",
+        dataset_path="./data/wikipedia_15percent",
         batch_size=config["batch_size"],
         max_seq_length=config["max_seq_length"],
         mask_prob=config["mask_prob"],

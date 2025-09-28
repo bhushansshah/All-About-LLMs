@@ -1,12 +1,13 @@
 import torch
 import os
 
-def save_checkpoint(model, optimizer, step, path):
+def save_checkpoint(model, optimizer, step, training_losses, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     torch.save({
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.optimizer.state_dict() if hasattr(optimizer, "optimizer") else optimizer.state_dict(),
-        "step": step
+        "step": step,
+        "training_losses": training_losses
     }, path)
 
 def load_checkpoint(model, optimizer, path, device):

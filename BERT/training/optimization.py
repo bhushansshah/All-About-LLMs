@@ -19,11 +19,16 @@ class LinearWarmupDecay:
         self.total_steps = total_steps
         self.step_num = 0
 
+        # Save the initial lr for each param group
+        for param_group in self.optimizer.param_groups:
+            param_group["initial_lr"] = param_group["lr"]
+
     def step(self):
         self.step_num += 1
         lr_mult = self.get_lr_multiplier()
         for param_group in self.optimizer.param_groups:
-            param_group['lr'] = param_group.get('initial_lr', param_group['lr']) * lr_mult
+            base_lr = param_group["initial_lr"]  # always use stored base
+            param_group["lr"] = base_lr * lr_mult
         self.optimizer.step()
 
     def zero_grad(self):
@@ -32,4 +37,8 @@ class LinearWarmupDecay:
     def get_lr_multiplier(self):
         if self.step_num < self.warmup_steps:
             return float(self.step_num) / float(max(1, self.warmup_steps))
-        return max(0.0, float(self.total_steps - self.step_num) / float(max(1, self.total_steps - self.warmup_steps)))
+        return max(
+            0.0,
+            float(self.total_steps - self.step_num)
+            / float(max(1, self.total_steps - self.warmup_steps))
+        )
