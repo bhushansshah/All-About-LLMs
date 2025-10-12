@@ -4,19 +4,21 @@ import os
 from pathlib import Path
 import math
 
-def save_checkpoint(model, optimizer, scheduler, step, ckpt_dir="./checkpoints"):
+
+def save_checkpoint(model, optimizer, scheduler, training_losses, step, ckpt_dir="./checkpoints"):
     Path(ckpt_dir).mkdir(parents=True, exist_ok=True)
     fn = os.path.join(ckpt_dir, f"ckpt-step-{step}.pt")
     torch.save({
         "model_state": model.state_dict(),
         "opt_state": optimizer.state_dict(),
         "sched_state": scheduler.state_dict() if scheduler is not None else None,
+        "training_losses": training_losses,
         "step": step
     }, fn)
     print(f"[checkpoint] saved {fn}")
 
-def load_checkpoint(path, model, optimizer=None, scheduler=None):
-    ckpt = torch.load(path, map_location="cpu")
+def load_checkpoint(path, model, config, optimizer=None, scheduler=None):
+    ckpt = torch.load(path, map_location=config.device)
     model.load_state_dict(ckpt["model_state"])
     if optimizer and ckpt.get("opt_state"):
         optimizer.load_state_dict(ckpt["opt_state"])
@@ -33,6 +35,8 @@ def evaluate(model, dataloader, device):
     for batch in dataloader:
         input_ids = batch["input_ids"].to(device)
         labels = batch["labels"].to(device)
+        labels[:, :-1] = input_ids[:, 1:]
+        labels[:, -1] = -100
         logits = model(input_ids)
         B, T, V = logits.shape
         loss = loss_f(logits.view(-1, V), labels.view(-1))

@@ -5,9 +5,10 @@ from functools import partial
 from datasets import load_from_disk
 from transformers import AutoTokenizer, PreTrainedTokenizerFast
 from torch.utils.data import DataLoader
-from configs import Config
+from config import Config, EnvironmentConfig
 
 cfg = Config()
+env_cfg = EnvironmentConfig()
 
 # Directory where the tokenizer will be stored locally
 TOKENIZER_DIR = os.path.join("tokenizer", "llama2")
@@ -23,14 +24,14 @@ def get_tokenizer():
     # If tokenizer already saved locally
     if os.path.exists(os.path.join(TOKENIZER_DIR, "tokenizer_config.json")):
         print(f"[Tokenizer] Loading LLaMA-2 tokenizer from local directory: {TOKENIZER_DIR}")
-        tok = AutoTokenizer.from_pretrained(TOKENIZER_DIR, use_fast=True)
+        tok = AutoTokenizer.from_pretrained(TOKENIZER_DIR, use_fast=True, token=env_cfg.hf_token)
     else:
         print("[Tokenizer] Downloading 'meta-llama/Llama-2-7b-hf' tokenizer from Hugging Face...")
-        tok = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf", use_fast=True)
+        tok = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf", use_fast=True, token=env_cfg.hf_token)
         print(f"[Tokenizer] Saving tokenizer to {TOKENIZER_DIR}")
         tok.save_pretrained(TOKENIZER_DIR)
 
-    # Ensure EOS/PAD tokens are defined for LM training
+    # # Ensure EOS/PAD tokens are defined for LM training
     if tok.eos_token is None:
         tok.add_special_tokens({"eos_token": "</s>"})
     if tok.pad_token is None:
@@ -51,12 +52,12 @@ def load_and_prepare_dataset(data_dir=cfg.data_dir, tokenizer=None, block_size=c
     text_col = "text" if "text" in ds.column_names else ds.column_names[0]
 
     # Tokenize each example
-    def tokenize_example(ex):
-        out = tokenizer(ex[text_col], truncation=False)
-        return {"input_ids": out["input_ids"]}
+    def tokenize_example(batch):
+        out = tokenizer(batch[text_col], truncation=False)
+        return out
 
-    ds = ds.map(tokenize_example, batched=False, num_proc=4, remove_columns=ds.column_names)
-
+    ds = ds.map(tokenize_example, batched=True, num_proc=8, remove_columns=ds.column_names)
+    ds = ds.remove_columns([col for col in ds.column_names if col != "input_ids"])
     # Concatenate and chunk into blocks
     def group_texts(examples):
         concatenated = sum(examples["input_ids"], [])
@@ -66,7 +67,7 @@ def load_and_prepare_dataset(data_dir=cfg.data_dir, tokenizer=None, block_size=c
         }
         return result
 
-    ds = ds.map(group_texts, batched=True, batch_size=1000, num_proc=4)
+    ds = ds.map(group_texts, batched=True, batch_size=1000, num_proc=8)
 
     # Split into train/test sets
     ds = ds.train_test_split(test_size=cfg.train_test_split, seed=42)

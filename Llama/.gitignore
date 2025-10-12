@@ -1,2 +1,5 @@
 checkpoints
 tokenizer
+data
+__pycache__
+.env
