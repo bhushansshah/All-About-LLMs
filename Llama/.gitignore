@@ -3,3 +3,4 @@ tokenizer
 data
 __pycache__
 .env
+finetune_checkpoints
