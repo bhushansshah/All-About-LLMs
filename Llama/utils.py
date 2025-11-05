@@ -3,7 +3,7 @@ import torch
 import os
 from pathlib import Path
 import math
-
+from tqdm import tqdm
 
 def save_checkpoint(model, optimizer, scheduler, training_losses, step, ckpt_dir="./checkpoints"):
     Path(ckpt_dir).mkdir(parents=True, exist_ok=True)
@@ -32,7 +32,8 @@ def evaluate(model, dataloader, device):
     total_loss = 0.0
     total_tokens = 0
     loss_f = torch.nn.CrossEntropyLoss(ignore_index=-100, reduction="sum")
-    for batch in dataloader:
+    loop = tqdm(dataloader, desc="Evaluating", leave=False)
+    for batch in loop:
         input_ids = batch["input_ids"].to(device)
         labels = batch["labels"].to(device)
         labels[:, :-1] = input_ids[:, 1:]
@@ -42,5 +43,6 @@ def evaluate(model, dataloader, device):
         loss = loss_f(logits.view(-1, V), labels.view(-1))
         total_loss += loss.item()
         total_tokens += (labels != -100).sum().item()
+        loop.set_postfix(loss=total_loss / total_tokens if total_tokens > 0 else float('inf'))
     ppl = math.exp(total_loss / total_tokens)
     return {"loss": total_loss / total_tokens, "ppl": ppl}

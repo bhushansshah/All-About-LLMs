@@ -1,0 +1,19 @@
+generate text - python -m tests.generate \
+  --checkpoint checkpoints/ckpt-step-20000.pt \
+  --tokenizer_dir ./tokenizer/llama2 \
+  --prompt "In the summer of " \
+  --max_new_tokens 100 \
+  --temperature 0.8 \
+  --top_k 50 \
+  --device cpu
+
+
+generate poem - python -m generate_poem \
+  --checkpoint ./finetune_checkpoints/ckpt-step-8575.pt \
+  --tokenizer_dir ./tokenizer/llama2 \
+  --prompt "Write a poem about a person in love" \
+  --max_new_tokens 300 \
+  --temperature 0.8 \
+  --top_k 80 \
+  --top_p 0.92 \
+  --device cpu

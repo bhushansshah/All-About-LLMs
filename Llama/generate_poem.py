@@ -11,6 +11,37 @@ import os
 cfg = Config()
 
 # ------------------------
+# Filtering helpers
+# ------------------------
+def top_k_top_p_filtering(logits, top_k=None, top_p=None):
+    """Filter logits using top-k and/or nucleus (top-p) sampling."""
+    logits = logits.clone()
+
+    # Top-k filtering
+    if top_k is not None and top_k > 0:
+        top_values, _ = torch.topk(logits, top_k)
+        min_allowed = top_values[:, -1].unsqueeze(-1)
+        logits = torch.where(logits < min_allowed, torch.full_like(logits, -float("Inf")), logits)
+
+    # Top-p (nucleus) filtering
+    if top_p is not None and top_p < 1.0:
+        sorted_logits, sorted_indices = torch.sort(logits, descending=True)
+        cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+
+        # Remove tokens with cumulative probability above threshold
+        sorted_indices_to_remove = cumulative_probs > top_p
+        # Shift mask right to keep at least one token
+        sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+        sorted_indices_to_remove[..., 0] = 0
+
+        for b in range(logits.size(0)):
+            indices_to_remove = sorted_indices[b, sorted_indices_to_remove[b]]
+            logits[b, indices_to_remove] = -float("Inf")
+
+    return logits
+
+
+# ------------------------
 # Sampling function
 # ------------------------
 @torch.no_grad()
@@ -21,6 +52,7 @@ def sample(
     max_new_tokens=100,
     temperature=1.0,
     top_k=None,
+    top_p=None,
     device="cpu"
 ):
     """
@@ -38,35 +70,24 @@ def sample(
     eos_token_id = tokenizer.eos_token_id
 
     for _ in range(max_new_tokens):
-        # Keep only the last block_size tokens as context
         context = generated[:, -model.block_size:]
 
-        # Forward pass
         logits = model(context)
         logits = logits[:, -1, :] / temperature  # (B, vocab_size)
 
-        # Optional top-k filtering
-        if top_k is not None:
-            top_values, _ = torch.topk(logits, top_k)
-            min_allowed = top_values[:, -1].unsqueeze(-1)
-            logits = torch.where(
-                logits < min_allowed, torch.full_like(logits, -float("Inf")), logits
-            )
+        # Apply top-k and/or top-p filtering
+        logits = top_k_top_p_filtering(logits, top_k=top_k, top_p=top_p)
 
         probs = F.softmax(logits, dim=-1)
 
-        # Sample next token
-        next_token = torch.multinomial(probs, num_samples=1)  # (B, 1)
+        next_token = torch.multinomial(probs, num_samples=1)
         next_id = next_token.item()
 
-        # Append token
         generated = torch.cat((generated, next_token), dim=1)
 
-        # Stop if EOS token generated
         if eos_token_id is not None and next_id == eos_token_id:
             break
 
-    # Decode to string, skip special tokens
     output_text = tokenizer.decode(generated[0].tolist(), skip_special_tokens=True)
     return output_text
 
@@ -76,13 +97,14 @@ def sample(
 # ------------------------
 def main():
     parser = argparse.ArgumentParser(description="Generate a poem using MiniLLaMA checkpoint")
-    parser.add_argument("--checkpoint", type=str, required=True, help="Path to model checkpoint")
-    parser.add_argument("--tokenizer_dir", type=str, required=True, help="Path to tokenizer directory")
-    parser.add_argument("--prompt", type=str, required=True, help="Prompt text to start generation")
-    parser.add_argument("--max_new_tokens", type=int, default=100, help="Maximum number of new tokens to generate")
-    parser.add_argument("--temperature", type=float, default=1.0, help="Sampling temperature")
-    parser.add_argument("--top_k", type=int, default=None, help="Top-k sampling cutoff")
-    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu", help="Device to run on")
+    parser.add_argument("--checkpoint", type=str, required=True)
+    parser.add_argument("--tokenizer_dir", type=str, required=True)
+    parser.add_argument("--prompt", type=str, required=True)
+    parser.add_argument("--max_new_tokens", type=int, default=100)
+    parser.add_argument("--temperature", type=float, default=1.0)
+    parser.add_argument("--top_k", type=int, default=None)
+    parser.add_argument("--top_p", type=float, default=None)
+    parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
 
     # Load tokenizer
@@ -114,6 +136,7 @@ def main():
         max_new_tokens=args.max_new_tokens,
         temperature=args.temperature,
         top_k=args.top_k,
+        top_p=args.top_p,
         device=args.device,
     )
 
