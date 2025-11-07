@@ -50,10 +50,12 @@ This design encourages the model to learn both **short-range** and **long-range*
 
 ### Training Behavior
 ![Training curves — loss and accuracy](./images/rope_1.png)
+
 The **training loss** plot shown in  that the transformer using **RoPE embeddings converges faster**, reaching lower loss earlier compared to the sinusoidal model. Similarly, the **training accuracy** plot indicates that RoPE achieves higher accuracy sooner, suggesting it learns positional dependencies more efficiently.
 
 ### Generalization to Longer Sequences
 ![Accuracy v/s Sequence Length](./images/rope_2.png)
+
 When evaluated on sequence lengths longer than those seen during training, the transformer using **sinusoidal embeddings performs poorly**—its accuracy drops significantly. In contrast, the **RoPE-based transformer** maintains much higher accuracy and demonstrates better generalization to longer contexts. This shows RoPE’s strong ability to **extrapolate beyond the training range**, while sinusoidal embeddings tend to lose positional coherence.
 
 ---
