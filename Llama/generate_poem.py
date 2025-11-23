@@ -100,7 +100,7 @@ def main():
     parser.add_argument("--checkpoint", type=str, required=True)
     parser.add_argument("--tokenizer_dir", type=str, required=True)
     parser.add_argument("--prompt", type=str, required=True)
-    parser.add_argument("--max_new_tokens", type=int, default=100)
+    parser.add_argument("--max_new_tokens", type=int, default=1000)
     parser.add_argument("--temperature", type=float, default=1.0)
     parser.add_argument("--top_k", type=int, default=None)
     parser.add_argument("--top_p", type=float, default=None)
@@ -125,7 +125,12 @@ def main():
     # Load checkpoint
     print(f"[Info] Loading checkpoint from {args.checkpoint}")
     checkpoint = torch.load(args.checkpoint, map_location=args.device)
-    model.load_state_dict(checkpoint["model_state"], strict=False)
+    missing, unexpected = model.load_state_dict(checkpoint["model_state"], strict=False)
+    if missing or unexpected:
+        print(f"[Warning] Missing keys: {missing}")
+        print(f"[Warning] Unexpected keys: {unexpected}")
+    else:
+        print("[Info] Model weights loaded successfully.")
 
     # Generate
     print(f"\n[Prompt] {args.prompt}\n")

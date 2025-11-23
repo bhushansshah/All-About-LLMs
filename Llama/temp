@@ -17,3 +17,9 @@ generate poem - python -m generate_poem \
   --top_k 80 \
   --top_p 0.92 \
   --device cpu
+
+python3 -m tests.generate --checkpoint ./new_checkpoints/ckpt-step-14000.pt --tokenizer_dir ./tokenizer/llama --prompt "A Memory of Two Mondays is a one-act play by Arthur Miller. He began writing the play in 1952, while working on" --max_new_tokens 200 --temperature 1.3 --top_k 1
+
+python3 train.py --resume_ckpt ./new_checkpoints/ckpt-step-14000.pt --wandb_id fsdcoghc
+
+python3 train.py --resume_ckpt ./new_checkpoints/ckpt-step-20000.pt --wandb_id fsdcoghc --reset_scheduler

@@ -1,0 +1,6 @@
+1. I trained the updated architecture for 20000 steps but wanted to train it even further from the same checkpoint
+2. Therefore I trained the model again from the same checkpoint but loading different sheduler and learning rate and same optimizer for 15000 step further
+3. However, after doing that I found out that the train loss, validation loss and validation ppl increased little bit.
+4. However, on the play prompt, the model appears to perform well but not so much on the car prompt
+5. After looking at the loss and ppl plots, it seems that loss and ppl initially increased but now it is decreasing again so i'll continue to train the model from the 35000 checkpoint
+6. I'll give it today to see if this works out or not. If it does not, then I'll use the 20000 checkpoint to train again by only loading the model weights with fresh optimizer, scheduler and learning rate

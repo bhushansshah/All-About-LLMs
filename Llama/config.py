@@ -15,16 +15,16 @@ class Config:
     # Model (mini LLaMA-ish)
     d_model: int = 512
     n_heads: int = 8
-    n_layers: int = 8
+    n_layers: int = 16
     ffn_multiplier: float = 8/3  # as in LLaMA they use 2/3 * 4d? (use 8/3 here)
-    rotary_dim: int = 64  # head dim uses rotary on first rotary_dim dims
+    rotary_dim: int = 32  # head dim uses rotary on first rotary_dim dims
 
     # Training
-    max_steps: int = 20000
-    eval_every: int = 1000
+    max_steps: int = 40000
+    eval_every: int = 100
     save_every: int = 1000
-    batch_size: int = 4         # number of sequences per batch (increase if memory allows)
-    tokens_per_batch: int = 4_096  # or compute batch as batch_size * block_size
+    batch_size: int = 8         # number of sequences per batch (increase if memory allows)
+    tokens_per_batch: int =  8 * 512  # or compute batch as batch_size * block_size
     lr: float = 3e-4            # max LR (match small LLaMA example). Paper uses 3e-4 or 1.5e-4 depending on size. :contentReference[oaicite:2]{index=2}
     final_lr_ratio: float = 0.1  # final LR is 10% of max according to paper. :contentReference[oaicite:3]{index=3}
     weight_decay: float = 0.1   # from paper. :contentReference[oaicite:4]{index=4}
@@ -33,10 +33,11 @@ class Config:
     grad_clip: float = 1.0      # from paper. :contentReference[oaicite:7]{index=7}
 
     # Misc
-    device: str = "cuda" if __import__("torch").cuda.is_available() else "cpu"
-    checkpoint_dir: str = "./checkpoints"
+    device: str = "mps" if __import__("torch").mps.is_available() else "cpu"
+    checkpoint_dir: str = "./new_checkpoints"
     use_amp: bool = False  # use mixed precision training
 
 class EnvironmentConfig:
     # Environment variables (like HF_TOKEN) can be loaded here if needed
     hf_token: str = os.getenv("HF_TOKEN")  # Set this to your Hugging Face token if required
+    wandb_api_key: str = os.getenv("WANDB_API_KEY")  # Set this to your Weights & Biases API key if required

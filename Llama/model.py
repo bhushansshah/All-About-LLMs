@@ -111,12 +111,12 @@ class CausalSelfAttention(nn.Module):
 class SwiGLU(nn.Module):
     def __init__(self, d_model, hidden_dim):
         super().__init__()
-        self.w1 = nn.Linear(d_model, hidden_dim, bias=False)
-        self.w2 = nn.Linear(d_model, hidden_dim, bias=False)
-        self.w3 = nn.Linear(hidden_dim, d_model, bias=False)
+        self.gate_up = nn.Linear(d_model, 2 * hidden_dim, bias=False)
+        self.down_proj = nn.Linear(hidden_dim, d_model, bias=False)
 
     def forward(self, x):
-        return self.w3(self.w1(x) * F.silu(self.w2(x)))
+        gate, up = self.gate_up(x).chunk(2, dim=-1)
+        return self.down_proj(gate * F.silu(up))
 
 
 # =====================================================

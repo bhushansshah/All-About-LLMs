@@ -19,7 +19,7 @@ def sample(model, tokenizer, prompt, max_new_tokens=100, temperature=1.0, top_k=
     Generate text autoregressively from the model.
     """
     model.eval()
-    input_ids = tokenizer.encode(prompt, return_tensors="pt").to(device)
+    input_ids = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)['input_ids'].to(device)
     generated = input_ids.clone()
 
     for _ in range(max_new_tokens):
