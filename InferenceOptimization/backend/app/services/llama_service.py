@@ -98,8 +98,16 @@ class LlamaService:
 
         def producer() -> None:
             try:
+                template = (
+                    "<|im_start|>system\n"
+                    "You are a concise assistant. Answer factually.<|im_end|>\n"
+                    "<|im_start|>user\n"
+                    f"{prompt}\n"
+                    "<|im_end|>\n"
+                    "<|im_start|>assistant\n"
+                )
                 iterator = self._llama.create_completion(  # type: ignore[attr-defined]
-                    prompt=prompt,
+                    prompt=template,
                     max_tokens=max_tokens,
                     temperature=temperature,
                     stream=True,
@@ -154,7 +162,7 @@ class LlamaService:
             await asyncio.sleep(0.05)
             yield GenerationChunk(text="[End of mock output]", token_count=4)
 
-    @staticmethod
+    @staticmethod   
     def _estimate_token_count(text: str) -> int:
         """Very rough heuristic for token counting."""
 
