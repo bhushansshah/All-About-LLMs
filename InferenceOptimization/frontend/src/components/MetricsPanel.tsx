@@ -29,6 +29,11 @@ export const MetricsPanel = ({ metrics, isStreaming }: MetricsPanelProps) => {
       value: `${formatNumber(metrics.lastRequestLatency, 3)} s`,
       description: `Tokens: ${metrics.lastRequestTokens}`,
     },
+    {
+      label: "Avg Batch Size",
+      value: formatNumber(metrics.averageBatchSize ?? 0, 1),
+      description: "Average concurrent requests (Version 2).",
+    },
   ];
 
   return (

@@ -17,6 +17,7 @@ class Settings(BaseModel):
     n_ctx: int = int(os.getenv("MODEL_CONTEXT_SIZE", "4096"))
     n_threads: int = int(os.getenv("MODEL_THREADS", str(os.cpu_count() or 4)))
     n_gpu_layers: int = int(os.getenv("MODEL_N_GPU_LAYERS", "0"))
+    n_batch: int = int(os.getenv("MODEL_N_BATCH", "512"))
     max_tokens: int = int(os.getenv("DEFAULT_MAX_TOKENS", "256"))
     temperature: float = float(os.getenv("DEFAULT_TEMPERATURE", "0.7"))
     use_mock: bool = os.getenv("LLAMA_USE_MOCK", "true").lower() in {"1", "true", "yes"}

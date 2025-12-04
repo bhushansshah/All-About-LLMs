@@ -99,6 +99,7 @@ async def generate(
         prompt=request.prompt,
         max_tokens=request.max_tokens,
         temperature=request.temperature,
+        use_optimizations=request.use_optimizations,
     )
 
     return StreamingResponse(
@@ -112,6 +113,7 @@ async def read_metrics() -> MetricsSnapshot:
     """Return aggregate metrics over the sliding window."""
 
     snapshot = metrics_tracker.snapshot()
+    snapshot["average_batch_size"] = llama_service.average_batch_size
     return MetricsSnapshot(**snapshot)
 
 

@@ -11,12 +11,13 @@ export const PromptForm = ({ onSubmit, onReset, isStreaming }: PromptFormProps) 
   const [prompt, setPrompt] = useState("");
   const [maxTokens, setMaxTokens] = useState(256);
   const [temperature, setTemperature] = useState(0.7);
+  const [useOptimizations, setUseOptimizations] = useState(false);
 
   const promptChars = useMemo(() => prompt.trim().length, [prompt]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onSubmit(prompt, { maxTokens, temperature });
+    onSubmit(prompt, { maxTokens, temperature, useOptimizations });
   };
 
   const handleReset = () => {
@@ -79,6 +80,19 @@ export const PromptForm = ({ onSubmit, onReset, isStreaming }: PromptFormProps) 
             />
             <span className="text-lg font-semibold text-white">{temperature.toFixed(1)}</span>
           </div>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl bg-surface/60 p-4">
+          <input
+            type="checkbox"
+            id="optimizations"
+            checked={useOptimizations}
+            onChange={(e) => setUseOptimizations(e.target.checked)}
+            disabled={isStreaming}
+            className="h-5 w-5 accent-primary"
+          />
+          <label htmlFor="optimizations" className="text-sm font-medium text-white/90">
+            Enable Version 2 Optimizations (Batching + KV Cache)
+          </label>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button

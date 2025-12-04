@@ -6,11 +6,13 @@ export type GenerationMetrics = {
   averageLatency: number;
   lastRequestLatency: number;
   lastRequestTokens: number;
+  averageBatchSize: number;
 };
 
 export type GenerationOptions = {
   maxTokens: number;
   temperature: number;
+  useOptimizations: boolean;
 };
 
 export type StreamState = {
@@ -28,6 +30,7 @@ const defaultMetrics: GenerationMetrics = {
   averageLatency: 0,
   lastRequestLatency: 0,
   lastRequestTokens: 0,
+  averageBatchSize: 0,
 };
 
 export const useLLMStream = () => {
@@ -59,6 +62,7 @@ export const useLLMStream = () => {
           payload.last_request_latency ?? payload.lastRequestLatency ?? 0,
         lastRequestTokens:
           payload.last_request_tokens ?? payload.lastRequestTokens ?? 0,
+        averageBatchSize: payload.average_batch_size ?? payload.averageBatchSize ?? 0,
       });
     } catch (error) {
       console.warn("Failed to poll metrics", error);
@@ -114,6 +118,7 @@ export const useLLMStream = () => {
             prompt,
             max_tokens: options.maxTokens,
             temperature: options.temperature,
+            use_optimizations: options.useOptimizations,
           }),
           signal: controller.signal,
         });
@@ -177,6 +182,8 @@ export const useLLMStream = () => {
                     payload.metrics.last_request_latency ?? payload.metrics.lastRequestLatency ?? 0,
                   lastRequestTokens:
                     payload.metrics.last_request_tokens ?? payload.metrics.lastRequestTokens ?? 0,
+                  averageBatchSize:
+                    payload.metrics.average_batch_size ?? payload.metrics.averageBatchSize ?? 0,
                 });
               }
               if (payload.type === "error") {

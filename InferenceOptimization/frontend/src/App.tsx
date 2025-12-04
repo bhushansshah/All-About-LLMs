@@ -11,7 +11,7 @@ const App = () => {
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 pt-12">
         <header className="flex flex-col gap-4">
           <span className="text-xs font-semibold uppercase tracking-[0.4em] text-primary-foreground/70">
-            Version 1 · Baseline
+            Inference Optimization
           </span>
           <h1 className="text-4xl font-bold text-white md:text-5xl">
             LLM Inference Optimization Demo
